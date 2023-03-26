@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "am_node.h"
 
@@ -15,6 +16,8 @@ enum am_data_type {
         AM_DATA_OPERATOR,
         AM_DATA_LPAREN,
         AM_DATA_RPAREN,
+
+        AM_DATA_TYPES_COUNT
 };
 
 /* Supported arithmetic operators, in descending order of precedence */
@@ -56,7 +59,7 @@ void am_node_destroy_pool ( struct am_node * pool )
 struct am_node * am_node_format_number ( struct am_node * pool, size_t idx,
                 am_number_t value )
 {
-        pool [ idx ].type = AM_DATA_LPAREN;
+        pool [ idx ].type = AM_DATA_NUMBER;
         pool [ idx ].value = value;
 
         return & ( pool [ idx ] );
@@ -73,31 +76,47 @@ static const char * stringify_operator ( enum am_operator op )
 }
 #endif
 
+static inline size_t _parser_number ( char * str, size_t len,
+                struct am_node * node )
+{
+        return snprintf ( str, len, "Literal: %.3f", node->value );
+}
+
+static inline size_t _parser_not_implemented ( char * str, size_t len,
+                struct am_node * node )
+{
+        ( void ) node;
+        return snprintf ( str, len, "Not Implemented" );
+}
+
+/* Format the given node into the given string, using a variety of formatters.
+ * If the string has an unreasonably small capacity, NULL is returned and errno
+ * is set. Otherwise, the string is compiled as necessary and then returned for
+ * the caller's convenience. */
 char * am_node_tostring ( char * str, size_t len, struct am_node * node )
 {
         static const size_t MINIMUM_LENGTH = 16;
-        size_t chrs = 0;
+        static size_t ( * formatter [ AM_DATA_TYPES_COUNT + 1 ] )
+                ( char *, size_t, struct am_node * )
+                        = { _parser_not_implemented,
+                            _parser_number,
+                            _parser_not_implemented,
+                            _parser_not_implemented,
+                            _parser_not_implemented,
+                            _parser_not_implemented };
 
         if ( len < MINIMUM_LENGTH ) {
                 errno = EINVAL;
                 return NULL;
         }
 
-        /* TODO: have this as an array of function pointers (formatters for
-         * their respective types), permuted over am_data_type. */
-        switch ( node->type ) {
-                case AM_DATA_NUMBER:
-                        chrs = snprintf ( str, len, "Literal: %.3f",
-                                node->value);
-                        break;
-                default:
-                        chrs = snprintf ( str, len, "Not Implemented" );
-        }
+        assert ( sizeof ( formatter ) / sizeof ( *formatter ) ==
+                AM_DATA_TYPES_COUNT + 1 );
 
-        /* snprintf(3) will always add a NULL-terminator; if it had intended to
-         * overwrite the available string space, then the output will be
+        /* The formatters will always add a NULL-terminator; if it had intended
+         * to overwrite the available string space, then the output will be
          * truncated, so we add a three-character marker to indicate as such. */
-        if ( chrs >= len ) {
+        if ( formatter [ node->type ] ( str, len, node ) >= len ) {
                 str [ len - 2 ] = '.';
                 str [ len - 3 ] = '.';
                 str [ len - 4 ] = '.';

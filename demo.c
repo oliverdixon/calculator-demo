@@ -6,7 +6,7 @@
 
 #include "am_stack.h"
 
-static void clean_all ( struct am_stack * stack, struct am_node * pool )
+static inline void _clean_all ( struct am_stack * stack, struct am_node * pool )
 {
         am_node_destroy_pool ( pool );
         am_stack_destroy ( stack );
@@ -27,7 +27,7 @@ int main ( int argc, char ** argv )
 
         if ( ! ( pool = am_node_create_pool ( 0 ) ) ) {
                 perror ( "am_node_create_pool" );
-                clean_all ( stack, pool );
+                _clean_all ( stack, pool );
                 return EXIT_FAILURE;
         }
 
@@ -36,7 +36,7 @@ int main ( int argc, char ** argv )
                 if ( !am_stack_push ( stack, am_node_format_number
                                 ( pool, i, i ) ) ) {
                         perror ( "am_stack_push" );
-                        clean_all ( stack, pool );
+                        _clean_all ( stack, pool );
                         return EXIT_FAILURE;
                 }
 
@@ -46,7 +46,7 @@ int main ( int argc, char ** argv )
                         am_stack_pop ( stack ) ) );
 
         /* Destroy the node pool and stack. */
-        clean_all ( stack, pool );
+        _clean_all ( stack, pool );
 
         return EXIT_SUCCESS;
 }
