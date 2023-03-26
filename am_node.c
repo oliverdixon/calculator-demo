@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 
 #include "am_node.h"
 
@@ -18,17 +19,6 @@ enum am_data_type {
         AM_DATA_RPAREN,
 
         AM_DATA_TYPES_COUNT
-};
-
-/* Supported arithmetic operators, in descending order of precedence */
-enum am_operator {
-        AM_OP_UNKNOWN,
-
-        AM_OP_POWER,
-        AM_OP_DIVIDE,
-        AM_OP_MULTIPLY,
-        AM_OP_ADD,
-        AM_OP_SUBTRACT
 };
 
 /* Complete definition for the arithmetic node */
@@ -56,7 +46,7 @@ void am_node_destroy_pool ( struct am_node * pool )
 }
 
 /* Encode a number into the given node, returning the packed node. */
-struct am_node * am_node_format_number ( struct am_node * pool, size_t idx,
+struct am_node * am_node_encode_number ( struct am_node * pool, size_t idx,
                 am_number_t value )
 {
         pool [ idx ].type = AM_DATA_NUMBER;
@@ -65,28 +55,81 @@ struct am_node * am_node_format_number ( struct am_node * pool, size_t idx,
         return & ( pool [ idx ] );
 }
 
-#if 0
-static const char * stringify_operator ( enum am_operator op )
+/* Encode an operator into the given node, returning the packed node. */
+struct am_node * am_node_encode_operator ( struct am_node * pool, size_t idx,
+                enum am_operator op )
 {
-        static const char * dictionary [ ] = { "Unknown", "Power", "Divide",
-                "Multiply", "Add", "Subtract" };
+        pool [ idx ].type = AM_DATA_OPERATOR;
+        pool [ idx ].op = op;
 
-        return ( op >= 0 && op <= sizeof ( dictionary ) /
-                sizeof ( *dictionary ) ) ? dictionary [ op ] : dictionary [ 0 ];
+        return & ( pool [ idx ] );
 }
-#endif
 
-static inline size_t _parser_number ( char * str, size_t len,
+/* Write a constant source string to a destination string, performing basic
+ * length checks as necessary. This is a simple alternative for snprintf(3) for
+ * the node formatters. */
+static inline size_t _simple_writeout ( char * dest, const char * src,
+                size_t len )
+{
+        const size_t srclen = strlen ( src );
+        assert ( len > 0 );
+
+        if ( srclen >= len ) {
+                len--;
+                for ( size_t i = 0; i < len; i++ )
+                        /* The strings are short, and since we already know the
+                         * source and destination string lengths, this linear
+                         * approach is desirable to strncpy(3), which invariably
+                         * recalculates the source length. We cannot necessarily
+                         * just end the string early by replacing a character
+                         * with a NULL-terminator, since the source string may
+                         * be a string literal, existing in read-only memory. */
+
+                        dest [ i ] = src [ i ];
+        } else
+                strcpy ( dest, src );
+
+        return srclen;
+}
+
+/* Format a number as a string */
+static inline size_t _formatter_number ( char * str, size_t len,
                 struct am_node * node )
 {
         return snprintf ( str, len, "Literal: %.3f", node->value );
 }
 
-static inline size_t _parser_not_implemented ( char * str, size_t len,
+/* Catch-all string formatter for node types with no defined string
+ * representation. */
+static inline size_t _formatter_not_implemented ( char * str, size_t len,
                 struct am_node * node )
 {
         ( void ) node;
-        return snprintf ( str, len, "Not Implemented" );
+        return _simple_writeout ( str, "Not Implemented", len );
+}
+
+/* Format an operator as a string */
+static inline size_t _formatter_operator ( char * str, size_t len,
+                struct am_node * node )
+{
+        static char * opstr [ ] = { "Unknown", "Power", "Divide",
+                "Multiply", "Add", "Subtract" };
+        size_t used;
+        assert ( sizeof ( opstr ) / sizeof ( *opstr ) == AM_OP_TYPES_COUNT );
+
+        used = _simple_writeout ( str, "Operator: ", len );
+
+        return used + _simple_writeout ( & ( str [ used ] ), ( node->op >= 1 &&
+                node->op < AM_OP_TYPES_COUNT ) ? opstr [ node->op ] :
+                        opstr [ 0 ], len - used );
+}
+
+/* Format a parenthesis (left or right) as a string */
+static inline size_t _formatter_paren ( char * str, size_t len,
+                struct am_node * node )
+{
+        return _simple_writeout ( str, ( node->type == AM_DATA_LPAREN ) ?
+                "Left Parenthesis" : "Right Parenthesis", len );
 }
 
 /* Format the given node into the given string, using a variety of formatters.
@@ -98,12 +141,13 @@ char * am_node_tostring ( char * str, size_t len, struct am_node * node )
         static const size_t MINIMUM_LENGTH = 16;
         static size_t ( * formatter [ AM_DATA_TYPES_COUNT + 1 ] )
                 ( char *, size_t, struct am_node * )
-                        = { _parser_not_implemented,
-                            _parser_number,
-                            _parser_not_implemented,
-                            _parser_not_implemented,
-                            _parser_not_implemented,
-                            _parser_not_implemented };
+                        = { _formatter_not_implemented, /* Unknown         */
+                            _formatter_number,          /* Number          */
+                            _formatter_operator,        /* Operator        */
+                            _formatter_paren,           /* (L) Parenthesis */
+                            _formatter_paren,           /* (R) Parenthesis */
+                            _formatter_not_implemented  /* Type-counter    */
+                    };
 
         if ( len < MINIMUM_LENGTH ) {
                 errno = EINVAL;
