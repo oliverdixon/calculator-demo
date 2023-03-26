@@ -1,7 +1,7 @@
 # TODO: Add release, debug, and IWYU targets.
 
 CC := clang
-CFLAGS := -Wall -Wextra -Wpedantic
+CFLAGS := -Wall -Wextra -Wpedantic -g
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))
