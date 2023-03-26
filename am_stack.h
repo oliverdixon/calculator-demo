@@ -14,7 +14,7 @@ struct am_stack * am_stack_initialise ( size_t );
 void am_stack_destroy ( struct am_stack * );
 struct am_node * am_stack_peek ( struct am_stack * );
 struct am_node * am_stack_pop ( struct am_stack * );
-int am_stack_push ( struct am_stack *, struct am_node * );
+struct am_node * am_stack_push ( struct am_stack *, struct am_node * );
 
 #endif /* _AM_STACK_H */
 

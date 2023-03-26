@@ -13,14 +13,17 @@ struct am_stack {
 /* Initialise the arithmetic stack with the given initial capacity, assuming
  * some sensible default if the passed value is zero. This function returns the
  * address of the new stack on success, or NULL on failure, in which case errno
- * is set. */
+ * is set. The pointers (i.e., stack nodes) are initialised to NULL. */
 struct am_stack * am_stack_initialise ( size_t cap )
 {
         struct am_stack * stack;
 
+        if ( !cap )
+                cap = DEFAULT_NODE_COUNT;
+
         if ( ! ( stack = malloc ( sizeof ( struct am_stack ) ) ) ||
-                        ! ( stack->data = malloc ( sizeof ( struct am_node * ) *
-                                ( cap ) ? cap : DEFAULT_NODE_COUNT ) ) ) {
+                        ! ( stack->data = calloc ( cap, sizeof ( struct
+                                am_node * ) ) ) ) {
                 /* If the data malloc failed, the superstructure may still be
                  * hanging around in memory. */
                 free ( stack );
@@ -67,9 +70,29 @@ struct am_node * am_stack_pop ( struct am_stack * stack )
         return node;
 }
 
-int am_stack_push ( struct am_stack * stack, struct am_node * node )
+/* Push the given node to the given arithmetic stack. If this is successful, the
+ * address of the newly pushed node is returned for convenience; otherwise, NULL
+ * is returned. If this function fails (i.e., the stack cannot be resized to
+ * accommodate the incoming node), the node is not pushed, but the existing
+ * stack remains intact and usable. */
+struct am_node * am_stack_push ( struct am_stack * stack,
+                struct am_node * node )
 {
-        // TODO
-        return 0;
+        if ( stack->size >= stack->capacity ) {
+                /* If we are at capacity, we try to double the pointer data. */
+                struct am_node ** new_stack_data;
+
+                if ( ! ( new_stack_data = realloc ( stack->data, sizeof ( struct
+                                am_node * ) * ( stack->capacity << 1 ) ) ) )
+                        return NULL;
+
+                stack->data = new_stack_data;
+                stack->capacity <<= 1;
+        }
+
+        stack->data [ stack->size ] = node;
+        stack->size++;
+
+        return node;
 }
 
