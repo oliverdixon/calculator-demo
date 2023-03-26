@@ -1,0 +1,12 @@
+# Dependencies
+*.d
+
+# Binaries
+*.out
+*.o
+*.gch
+demo
+
+# Vim swap files
+.*.sw*
+
