@@ -1,13 +1,14 @@
 # TODO: Add release, debug, and IWYU targets.
 
 CC := clang
-CFLAGS := -Wall -Wextra -Wpedantic -g
+CFLAGS := -Weverything -Wno-dangling-else -Wno-vla \
+	  -Wno-declaration-after-statement -g
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.c,%.d,$(SOURCES))
 
-TARGET := demo
+TARGET := calculator
 
 .PHONY: all clean
 
@@ -16,7 +17,6 @@ all: $(TARGET)
 clean:
 	$(RM) $(OBJECTS) $(DEPENDS) $(TARGET)
 
-# Linking the executable from the object files
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@
 
