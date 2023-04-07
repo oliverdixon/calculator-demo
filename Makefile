@@ -1,8 +1,6 @@
-# TODO: Add release, debug, and IWYU targets.
-
-CC := clang
+CC     := clang
 CFLAGS := -Weverything -Wno-dangling-else -Wno-vla \
-	  -Wno-declaration-after-statement -g
+          -Wno-declaration-after-statement -g -MMD -MP
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))
@@ -23,5 +21,5 @@ $(TARGET): $(OBJECTS)
 -include $(DEPENDS)
 
 %.o: %.c Makefile
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
