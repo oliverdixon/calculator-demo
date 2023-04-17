@@ -1,13 +1,17 @@
 # Dependencies
-*.d
+c/*.d
 
 # Binaries
-*.out
-*.o
-*.gch
-*.sh
-calculator
+c/*.out
+c/*.o
+c/*.gch
+c/*.sh
+c/calculator
 
 # Vim swap files
 .*.sw*
+
+# Java binaries and temp files
+java/*.class
+java/javac.*.args
 
