@@ -1,5 +1,5 @@
 /**
- * Implement the stack interface; see stack.h.
+ * Implement the stack interface; see 'stack.h'.
  *
  * @author Oliver Dixon
  */

@@ -1,5 +1,5 @@
 /**
- * Implement the node and node pool interface; see node.h
+ * Implement the node and node pool interface; see 'node.h'.
  *
  * @author Oliver Dixon
  */

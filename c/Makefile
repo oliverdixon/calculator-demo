@@ -1,6 +1,7 @@
 CC     := clang
-CFLAGS := -Weverything -Wno-dangling-else -Wno-vla \
-          -Wno-declaration-after-statement -g -MMD -MP
+CFLAGS := -Weverything -Wno-dangling-else -Wno-vla     \
+          -Wno-declaration-after-statement -g -MMD -MP \
+          -fsanitize=address
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))
