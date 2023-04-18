@@ -99,12 +99,14 @@ struct node * pool_new_node ( struct node_pool * self );
 char * node_format ( void * self, char * buffer, unsigned int size );
 
 /**
- * Encode a literal (type-denoted by number_t) into the given node.
+ * Encode a string, up until a natural delimiter, into a node, while setting the
+ * metadata accordingly.
  *
  * @param self the node
- * @param value the value to be encoded
+ * @param str the string to be parsed
+ * @return the destination of the new read head
  */
-void node_encode_literal ( struct node * self, number_t value );
+const char * node_encode ( struct node * self, const char * str );
 
 #endif /* NODE_H */
 

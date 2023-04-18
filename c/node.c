@@ -9,6 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <errno.h>
 
 #include "node.h"
@@ -59,6 +60,63 @@ struct node_pool {
 static inline bool is_full ( struct node_pool * self )
 {
         return self->used == self->capacity;
+}
+
+/**
+ * A shorthand helper for encoding an operator into a node and setting the type
+ *
+ * @param self the target node
+ * @param opr the internal operator type
+ * @return the number of bytes by which the input string should be advanced
+ */
+static inline unsigned int encode_opr ( struct node * self,
+                enum node_operator opr )
+{
+        self->type = NODE_OPERATOR;
+        self->op = opr;
+
+        return sizeof ( char );
+}
+
+/**
+ * A shorthand helper for encoding a parenthesis into a node and setting the type
+ *
+ * @param self the target node
+ * @param prn the internal parenthetical type
+ * @return the number of bytes by which the input string should be advanced
+ */
+static inline unsigned int encode_prn ( struct node * self, enum node_type prn )
+{
+        assert ( prn == NODE_LPAREN || prn == NODE_RPAREN );
+        self->type = prn;
+
+        return sizeof ( char );
+}
+
+/**
+ * A helper for encoding a literal (assumed to be type-compatible with float)
+ * into a node; the node type is also set appropriately.
+ *
+ * @param self the target node
+ * @param str the string whose head begins a literal token
+ * @return the number of bytes by which the input string should be advanced
+ */
+static inline unsigned int encode_literal ( struct node * self,
+                const char * str )
+{
+        char * end_ptr;
+        number_t val;
+
+        errno = 0;
+        val = strtof ( str, &end_ptr );
+
+        if ( !errno && end_ptr != str ) {
+                self->type = NODE_LITERAL;
+                self->value = val;
+        } else
+                return 0;
+
+        return ( unsigned int ) ( end_ptr - str );
 }
 
 /**
@@ -231,9 +289,29 @@ char * node_format ( void * self, char * buffer, unsigned int size )
         return buffer;
 }
 
-void node_encode_literal ( struct node * self, number_t value )
+const char * node_encode ( struct node * self, const char * str )
 {
-        self->type = NODE_LITERAL;
-        self->value = value;
+        self->type = NODE_UNKNOWN;
+
+        /* We first try to match for trivial single-character cases. In the
+         * current situation, this covers everything except literals. */
+        switch ( *str ) {
+
+                /* Parentheses */
+                case '(': str += encode_prn ( self, NODE_LPAREN ); break;
+                case ')': str += encode_prn ( self, NODE_RPAREN ); break;
+
+                /* Operators */
+                case '^': str += encode_opr ( self, NODE_OP_EXP      ); break;
+                case '/': str += encode_opr ( self, NODE_OP_DIVIDE   ); break;
+                case '*': str += encode_opr ( self, NODE_OP_MULTIPLY ); break;
+                case '+': str += encode_opr ( self, NODE_OP_ADD      ); break;
+                case '-': str += encode_opr ( self, NODE_OP_SUBTRACT ); break;
+
+                /* Anything else, likely a literal */
+                default:  str += encode_literal ( self, str );
+        }
+
+        return str;
 }
 
