@@ -93,24 +93,20 @@ static enum expr_status tokenise ( struct expression * self,
         const char * new_rh;
         enum expr_status status = EXPR_OK;
 
-        while ( *self->expr_head ) {
+        for ( ; *self->expr_head && status == EXPR_OK;
+                        self->expr_head = new_rh ) {
                 /* Pull a new node from the pool */
-                if ( ! ( node = pull_node ( pools, &pool_idx, pool_count ) ) ) {
+                if ( ! ( node = pull_node ( pools, &pool_idx, pool_count ) ) )
                         status = EXPR_NONODE;
-                        break;
-                }
 
                 /* Tokenise. If the new read head matches the old one, then we
                  * have encountered a troublesome symbol. */
                 if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
-                                self->expr_head ) {
+                                self->expr_head )
                         status = EXPR_BADSYMBOL;
-                        break;
-                }
 
-                self->expr_head = new_rh;
                 node_format ( node, fmt_buffer, 32 );
-                printf ( "New head: \"%s\"\tNode: %s\n", self->expr_head,
+                printf ( "Head: \"%s\"\tNode: %s\n", self->expr_head,
                         fmt_buffer );
         }
 

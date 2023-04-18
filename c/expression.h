@@ -1,12 +1,15 @@
 /**
  * This interface handles arithmetic expressions for the calculator to evaluate.
- * Exposed routines are capable of undertaking the:
+ * Exposed routines are capable of undertaking the core stages of the arithmetic
+ * computation:
  *
- *  - ...\ tokenisation of an expression from a string form into an equivalent
- *         internal representation (IR);
- *  - ...\ subsequent conversion of the IR from the infix order to postfix
- *         order; and
- *  - ...\ evaluation of the expression to a numerical value.
+ *   - Tokenisation of an expression from a string form into an equivalent
+ *     internal representation (IR);
+ *
+ *   - [TODO] Conversion of the IR from the infix order to postfix order with an
+ *     implementation of operator-precedence parsing; and
+ *
+ *   - [TODO] Stack-based evaluation of the expression to a numerical value.
  *
  * @author Oliver Dixon
  */
@@ -44,10 +47,6 @@ enum expr_status {
  */
 struct expression * expression_initialise ( const char * expr,
         struct node_pool ** pools, unsigned int pool_count );
-
-// int expression_postfix ( struct expression * self );
-
-// number_t expression_evaluate ( struct expression * self );
 
 /**
  * Shallow-destruct an entire expression type: constituent nodes are not freed.
