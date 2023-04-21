@@ -8,8 +8,10 @@
 #include <stdio.h>
 
 #include "node.h"
-#include "expr.h"
+#include "queue.h"
 #include "debug.h"
+
+#include "expr.h"
 
 /**
  * The transparent expression
@@ -21,19 +23,14 @@ struct expression {
         const char * expr_head;
 
         /**
-         * The internal nodal representation of the expression
-         */
-        struct node ** nodes;
-
-        /**
-         * The number of nodes
-         */
-        unsigned int node_count;
-
-        /**
          * The transient status of the expression
          */
         enum expr_status status;
+
+        /**
+         * Internal nodal representation of the expression
+         */
+        struct queue * nodes;
 };
 
 /**
@@ -131,19 +128,26 @@ struct expression * expression_initialise ( const char * expr,
 {
         struct expression * self;
 
-        if ( ( self = malloc ( sizeof ( struct expression ) ) ) ) {
-                self->expr_head = expr;
-                self->status = EXPR_OK;
+        if ( ( self = malloc ( sizeof ( struct expression ) ) ) )
+                if ( ! ( self->nodes = queue_initialise ( 0 ) ) ) {
+                        expression_destruct ( self );
+                        self = NULL;
+                } else {
+                        self->expr_head = expr;
+                        self->status = EXPR_OK;
 
-                tokenise ( self, pools, pool_count );
-        }
+                        tokenise ( self, pools, pool_count );
+                        debug_puts ( "Expression initialised" );
+                }
 
-        debug_puts ( "Expression initialised" );
         return self;
 }
 
 void expression_destruct ( struct expression * self )
 {
+        if ( self )
+                queue_destruct ( self->nodes );
+
         free ( self );
         debug_puts ( "Expression destructed" );
 }

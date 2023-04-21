@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdio.h> // stack_print (printf)
 
+#include "debug.h"
 #include "stack.h"
 
 /**
@@ -80,6 +81,8 @@ struct stack * stack_initialise ( unsigned int capacity )
                 else {
                         self->capacity = capacity;
                         self->size = 0;
+
+                        debug_puts ( "Stack initialised" );
                 }
 
         return self;
@@ -91,6 +94,7 @@ void stack_destruct ( struct stack * self )
                 free ( self->data );
 
         free ( self );
+        debug_puts ( "Stack destructed" );
 }
 
 void * stack_pop ( struct stack * self )
