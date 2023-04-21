@@ -8,9 +8,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #include "node.h"
-#include "expression.h"
+#include "expr.h"
+#include "debug.h"
 
 int main ( int argc, char ** argv )
 {
@@ -18,18 +21,18 @@ int main ( int argc, char ** argv )
         struct expression * expression;
 
         if ( argc < 2 ) {
-                fputs ( "No expression provided!\n", stderr );
+                debug_puts ( "No expression provided!" );
                 return EXIT_FAILURE;
         }
 
         if ( ! ( pool = pool_initialise ( 0 ) ) ) {
-                perror ( "pool_initialise" );
+                debug_puts ( "Could not initialise the pool!" );
+                debug_puts ( strerror ( errno ) );
                 return EXIT_FAILURE;
         }
 
         expression = expression_initialise ( argv [ 1 ], &pool, 1 );
-        expression_status_print ( expression, ( expression_get_status
-                ( expression ) == EXPR_OK ) ? stdout : stderr );
+        expression_status_print ( expression );
 
         expression_destruct ( expression );
         pool_destruct ( pool );

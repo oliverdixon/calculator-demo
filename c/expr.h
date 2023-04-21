@@ -14,8 +14,8 @@
  * @author Oliver Dixon
  */
 
-#ifndef EXPRESSION_H
-#define EXPRESSION_H
+#ifndef EXPR_H
+#define EXPR_H
 
 #include <stdio.h>
 #include "node.h"
@@ -64,12 +64,12 @@ void expression_destruct ( struct expression * self );
 enum expr_status expression_get_status ( struct expression * self );
 
 /**
- * Write a formatted status report of the given expression to the given buffer.
+ * Uses the debugging channels to print a human-readable report of the given
+ * expression. If debugging is not enabled, this function does nothing.
  *
- * @param self the expression
- * @param buffer the buffer to which the string should be written
+ * @param self the expression TODO
  */
-void expression_status_print ( struct expression * self, FILE * buffer );
+void expression_status_print ( struct expression * self );
 
-#endif /* EXPRESSION_H */
+#endif /* EXPR_H */
 

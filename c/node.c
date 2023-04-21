@@ -9,10 +9,10 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <errno.h>
 
 #include "node.h"
+#include "debug.h"
 
 /**
  * The transparent node
@@ -101,8 +101,7 @@ static inline unsigned int encode_prn ( struct node * self, enum node_type prn )
  * @param str the string whose head begins a literal token
  * @return the number of bytes by which the input string should be advanced
  */
-static inline unsigned int encode_literal ( struct node * self,
-                const char * str )
+static inline unsigned int encode_lit ( struct node * self, const char * str )
 {
         char * end_ptr;
         number_t val;
@@ -236,6 +235,7 @@ struct node_pool * pool_initialise ( unsigned int capacity )
                         self->used = 0;
                 }
 
+        debug_puts ( "Node pool initialised" );
         return self;
 }
 
@@ -245,6 +245,7 @@ void pool_destruct ( struct node_pool * self )
                 free ( self->data );
 
         free ( self );
+        debug_puts ( "Node pool destructed" );
 }
 
 struct node * pool_new_node ( struct node_pool * self )
@@ -309,7 +310,7 @@ const char * node_encode ( struct node * self, const char * str )
                 case '-': str += encode_opr ( self, NODE_OP_SUBTRACT ); break;
 
                 /* Anything else, likely a literal */
-                default:  str += encode_literal ( self, str );
+                default:  str += encode_lit ( self, str );
         }
 
         return str;

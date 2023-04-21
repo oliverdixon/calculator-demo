@@ -2,7 +2,7 @@ CC     := clang
 CFLAGS := -Weverything -Wno-dangling-else -Wno-vla     \
           -Wno-declaration-after-statement -g -MMD -MP \
           -fsanitize=address -Wno-padded               \
-	  -Wno-covered-switch-default
+	  -Wno-covered-switch-default -DDEBUG_VERBOSE
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))

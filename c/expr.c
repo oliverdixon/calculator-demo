@@ -1,5 +1,5 @@
 /**
- * Implement the expression interface; see 'expression.h'.
+ * Implement the expression interface; see 'expr.h'.
  *
  * @author Oliver Dixon
  */
@@ -8,17 +8,13 @@
 #include <stdio.h>
 
 #include "node.h"
-#include "expression.h"
+#include "expr.h"
+#include "debug.h"
 
 /**
  * The transparent expression
  */
 struct expression {
-        /**
-         * The operator stack, used according to the Shunting-Yard algorithm
-         */
-        struct stack * op_stack;
-
         /**
          * The current read-head of the expression
          */
@@ -28,6 +24,11 @@ struct expression {
          * The internal nodal representation of the expression
          */
         struct node ** nodes;
+
+        /**
+         * The number of nodes
+         */
+        unsigned int node_count;
 
         /**
          * The transient status of the expression
@@ -89,7 +90,6 @@ static enum expr_status tokenise ( struct expression * self,
 {
         struct node * node;
         unsigned int pool_idx = 0;
-        char fmt_buffer [ 32 ];
         const char * new_rh;
         enum expr_status status = EXPR_OK;
 
@@ -104,10 +104,6 @@ static enum expr_status tokenise ( struct expression * self,
                 if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
                                 self->expr_head )
                         status = EXPR_BADSYMBOL;
-
-                node_format ( node, fmt_buffer, 32 );
-                printf ( "Head: \"%s\"\tNode: %s\n", self->expr_head,
-                        fmt_buffer );
         }
 
         self->status = status;
@@ -119,17 +115,15 @@ enum expr_status expression_get_status ( struct expression * self )
         return self->status;
 }
 
-void expression_status_print ( struct expression * self, FILE * buffer )
+void expression_status_print ( struct expression * self )
 {
-        fputs ( status_str ( self->status ), buffer );
+        ( void ) status_str;
 
-        if ( self->status == EXPR_BADSYMBOL ) {
-                fputs ( " at: \"", buffer );
-                fputs ( self->expr_head, buffer );
-                fputc ( '\"', buffer );
-        }
-
-        fputc ( '\n', buffer );
+        if ( self->status == EXPR_BADSYMBOL )
+                debug_printf ( "%s at: \"%s\"\n", status_str ( self->status ),
+                        self->expr_head );
+        else
+                debug_puts ( status_str ( self->status ) );
 }
 
 struct expression * expression_initialise ( const char * expr,
@@ -144,11 +138,13 @@ struct expression * expression_initialise ( const char * expr,
                 tokenise ( self, pools, pool_count );
         }
 
+        debug_puts ( "Expression initialised" );
         return self;
 }
 
 void expression_destruct ( struct expression * self )
 {
         free ( self );
+        debug_puts ( "Expression destructed" );
 }
 
