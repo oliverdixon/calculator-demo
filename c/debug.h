@@ -33,9 +33,12 @@
                 fputs ( str, stderr );          \
                 fputc ( '\n', stderr );         \
         } while ( 0 )
+#  define debug_perror(str) \
+        perror ( DEBUG_PREFIX str )
 #else
 #  define debug_printf(fmt, ...)
 #  define debug_puts(str)
+#  define debug_perror(str)
 #endif
 
 #endif /* DEBUG_H */

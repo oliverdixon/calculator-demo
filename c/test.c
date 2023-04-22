@@ -6,7 +6,6 @@
  * @author Oliver Dixon
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
@@ -18,23 +17,27 @@
 int main ( int argc, char ** argv )
 {
         struct node_pool * pool;
-        struct expression * expression;
+        struct expression * expr;
 
         if ( argc < 2 ) {
-                debug_puts ( "No expression provided!" );
+                fputs ( "No expression provided!\n", stderr );
                 return EXIT_FAILURE;
         }
 
         if ( ! ( pool = pool_initialise ( 0 ) ) ) {
-                debug_puts ( "Could not initialise the pool!" );
-                debug_puts ( strerror ( errno ) );
+                debug_perror ( "Could not initialise the pool" );
                 return EXIT_FAILURE;
         }
 
-        expression = expression_initialise ( argv [ 1 ], &pool, 1 );
-        expression_status_print ( expression );
+        if ( ! ( expr = expression_initialise ( argv [ 1 ], &pool, 1 ) ) ) {
+                debug_perror ( "Could not initialise the expression" );
+                pool_destruct ( pool );
+                return EXIT_FAILURE;
+        }
 
-        expression_destruct ( expression );
+        expression_status_print ( expr );
+
+        expression_destruct ( expr );
         pool_destruct ( pool );
 
         return EXIT_SUCCESS;

@@ -228,14 +228,15 @@ struct node_pool * pool_initialise ( unsigned int capacity )
 
         if ( ( self = malloc ( sizeof ( struct node_pool ) ) ) )
                 if ( ! ( self->data = malloc ( sizeof ( struct node ) *
-                                capacity ) ) )
+                                capacity ) ) ) {
                         free ( self );
-                else {
+                        self = NULL;
+                } else {
                         self->capacity = capacity;
                         self->used = 0;
+                        debug_puts ( "Node pool initialised" );
                 }
 
-        debug_puts ( "Node pool initialised" );
         return self;
 }
 
@@ -328,5 +329,50 @@ struct node * pool_pull_node ( struct node_pool ** self,
                         *pool_idx++ < pool_count );
 
         return node;
+}
+
+enum node_type node_get_type ( struct node * self )
+{
+        return self->type;
+}
+
+enum node_operator node_op_get_type ( struct node * self )
+{
+        assert ( self->type == NODE_OPERATOR );
+        return self->op;
+}
+
+enum node_precedence node_test_precedence ( enum node_operator op1,
+                enum node_operator op2 )
+{
+        /* Rule #1: Exponentiation has the greatest precedence. */
+        if ( op1 == NODE_OP_EXP ) return NODE_PREC_GREATER;
+        if ( op2 == NODE_OP_EXP ) return NODE_PREC_LESSER;
+
+        /* Rule #2: Addition has the same precedence as subtraction, and
+         * division has the same precedence as division. */
+        if ( op1 > op2 ) {
+                if ( ( op1 == NODE_OP_ADD && op2 == NODE_OP_SUBTRACT ) || (
+                                op1 == NODE_OP_DIVIDE &&
+                                op2 == NODE_OP_MULTIPLY ) )
+                        return NODE_PREC_LASSOC;
+
+                return NODE_PREC_GREATER;
+        }
+
+        /* Rule #3: The converse case of Rule #2. */
+        if ( op1 < op2 ) {
+                if ( ( op2 == NODE_OP_ADD && op1 == NODE_OP_SUBTRACT ) || (
+                                op2 == NODE_OP_DIVIDE &&
+                                op1 == NODE_OP_MULTIPLY ) )
+                        return NODE_PREC_LASSOC;
+
+                return NODE_PREC_LESSER;
+        }
+
+        /* Note: As it stands, all implemented operators are left-associative.
+         * Rules are based on the C standards for the associativity of
+         * arithmetic operators. */
+        return NODE_PREC_LASSOC;
 }
 

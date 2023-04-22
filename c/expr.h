@@ -17,7 +17,6 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include <stdio.h>
 #include "node.h"
 
 /**
@@ -57,18 +56,10 @@ struct expression * expression_initialise ( const char * expr,
 void expression_destruct ( struct expression * self );
 
 /**
- * Get the current status of the given expression.
- *
- * @param self the expression
- * @return the corresponding status
- */
-enum expr_status expression_get_status ( struct expression * self );
-
-/**
  * Uses the debugging channels to print a human-readable report of the given
  * expression. If debugging is not enabled, this function does nothing.
  *
- * @param self the expression TODO
+ * @param self the expression to examine
  */
 void expression_status_print ( struct expression * self );
 

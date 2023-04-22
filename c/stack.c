@@ -76,9 +76,10 @@ struct stack * stack_initialise ( unsigned int capacity )
 
         if ( ( self = malloc ( sizeof ( struct stack ) ) ) )
                 if ( ! ( self->data = malloc ( sizeof ( void * ) *
-                                capacity ) ) )
+                                capacity ) ) ) {
                         free ( self );
-                else {
+			self = NULL;
+                } else {
                         self->capacity = capacity;
                         self->size = 0;
                         debug_puts ( "Stack initialised" );
