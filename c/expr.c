@@ -6,9 +6,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "node.h"
-#include "queue.h"
 #include "debug.h"
 
 #include "expr.h"
@@ -30,30 +30,21 @@ struct expression {
         /**
          * Internal nodal representation of the expression
          */
-        struct queue * nodes;
+        struct node ** data;
+
+        /**
+         * The (variable) number of nodes allowed by this expression
+         */
+        unsigned int capacity;
+
+        /**
+         * The current node-under-inspection in the nodal array. During the
+         * initial tokenisation, this should be incremented as usual. When the
+         * conversion to postfix notation is occurring, it should be reset to
+         * indicate that future commits should overwrite from the front.
+         */
+        unsigned int idx;
 };
-
-/**
- * Grab the next available node from the provided pools.
- *
- * @param pools the list of available node pools
- * @param pool_idx the current position in the node pool list
- * @param pool_count the number of available given pools
- * @return the requested node, or NULL if no such node is available
- */
-static inline struct node * pull_node ( struct node_pool ** pools,
-                unsigned int * pool_idx, unsigned int pool_count )
-{
-        struct node * node = NULL;
-
-        /* If we could not grab a node from the current pool, look to the next
-         * one, et cetera, until we've expended all available pools. If, at any
-         * point, we successfully grab a node, then we are done. */
-        while ( ! ( node = pool_new_node ( pools [ *pool_idx ] ) ) &&
-                        *pool_idx++ < pool_count );
-
-        return node;
-}
 
 /**
  * Parse the expression status into a human-readable string.
@@ -67,9 +58,64 @@ static inline const char * status_str ( enum expr_status status )
                 case EXPR_OK:        return "Expression OK";
                 case EXPR_NONODE:    return "Insufficient nodes";
                 case EXPR_BADSYMBOL: return "Unexpected symbol";
+                case EXPR_NOEXPR:    return "Insufficient expression capacity";
 
                 default: return "Unknown expression status";
         }
+}
+
+/**
+ * Determine whether the given expression node list must be increased to
+ * accommodate a new (unseen) node. If the current capacity is insufficient, its
+ * size is doubled; otherwise, nothing is done.
+ *
+ * @param self the node list
+ * @return the ability to add a new node
+ */
+static bool realloc_check ( struct expression * self )
+{
+        struct node ** new_data;
+
+        if ( self->idx + 1 >= self->capacity ) {
+                if ( ! ( new_data = realloc ( self->data,
+                                sizeof ( struct node * ) *
+                                ( self->capacity << 1 ) ) ) )
+                        return false;
+
+                self->data = new_data;
+                self->capacity <<= 1;
+        }
+
+        return true;
+}
+
+/**
+ * Commit (append) a structured node to the expression
+ *
+ * @param self the expression
+ * @param node the node to be added
+ * @return the committed node, or NULL if the operation could not be completed
+ */
+
+static inline bool commit_node ( struct expression * self, struct node * node )
+{
+        if ( !realloc_check ( self ) )
+                return NULL;
+
+        self->data [ self->idx++ ] = node;
+        return true;
+}
+
+/**
+ * Extract the next node from the start of the expression.
+ *
+ * @param self the expression
+ * @return the next germane node, or NULL if no nodes are encoded
+ */
+
+static inline struct node * extract_node ( struct expression * self )
+{
+        return ( self->idx ) ? self->data [ --self->idx ] : NULL;
 }
 
 /**
@@ -87,22 +133,26 @@ static enum expr_status tokenise ( struct expression * self,
 {
         struct node * node;
         unsigned int pool_idx = 0;
-        const char * new_rh;
+        const char * new_rh = NULL;
         enum expr_status status = EXPR_OK;
 
         for ( ; *self->expr_head && status == EXPR_OK;
-                        self->expr_head = new_rh ) {
+                        self->expr_head = new_rh )
                 /* Pull a new node from the pool */
-                if ( ! ( node = pull_node ( pools, &pool_idx, pool_count ) ) )
+                if ( ! ( node = pool_pull_node ( pools, &pool_idx,
+                                pool_count ) ) )
                         status = EXPR_NONODE;
 
                 /* Tokenise. If the new read head matches the old one, then we
                  * have encountered a troublesome symbol. */
-                if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
+                else if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
                                 self->expr_head )
                         status = EXPR_BADSYMBOL;
-        }
 
+                else if ( !commit_node ( self, node ) )
+                        status = EXPR_NOEXPR;
+
+        self->idx = 0;
         self->status = status;
         return status;
 }
@@ -128,17 +178,16 @@ struct expression * expression_initialise ( const char * expr,
 {
         struct expression * self;
 
-        if ( ( self = malloc ( sizeof ( struct expression ) ) ) )
-                if ( ! ( self->nodes = queue_initialise ( 0 ) ) ) {
-                        expression_destruct ( self );
-                        self = NULL;
-                } else {
-                        self->expr_head = expr;
-                        self->status = EXPR_OK;
+        if ( ( self = malloc ( sizeof ( struct expression ) ) ) ) {
+                self->data = NULL;
+                self->capacity = 1;
+                self->idx = 0;
+                self->expr_head = expr;
+                self->status = EXPR_OK;
 
-                        tokenise ( self, pools, pool_count );
-                        debug_puts ( "Expression initialised" );
-                }
+                tokenise ( self, pools, pool_count );
+                debug_puts ( "Expression initialised" );
+        }
 
         return self;
 }
@@ -146,7 +195,7 @@ struct expression * expression_initialise ( const char * expr,
 void expression_destruct ( struct expression * self )
 {
         if ( self )
-                queue_destruct ( self->nodes );
+                free ( self->data );
 
         free ( self );
         debug_puts ( "Expression destructed" );

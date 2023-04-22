@@ -316,3 +316,17 @@ const char * node_encode ( struct node * self, const char * str )
         return str;
 }
 
+struct node * pool_pull_node ( struct node_pool ** self,
+                unsigned int * pool_idx, unsigned int pool_count )
+{
+        struct node * node = NULL;
+
+        /* If we could not grab a node from the current pool, look to the next
+         * one, et cetera, until we've expended all available pools. If, at any
+         * point, we successfully grab a node, then we are done. */
+        while ( ! ( node = pool_new_node ( self [ *pool_idx ] ) ) &&
+                        *pool_idx++ < pool_count );
+
+        return node;
+}
+

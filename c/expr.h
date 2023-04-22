@@ -32,7 +32,8 @@ struct expression;
 enum expr_status {
         EXPR_OK,
         EXPR_NONODE,
-        EXPR_BADSYMBOL
+        EXPR_BADSYMBOL,
+        EXPR_NOEXPR,
 };
 
 /**

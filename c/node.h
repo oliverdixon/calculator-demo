@@ -108,5 +108,16 @@ char * node_format ( void * self, char * buffer, unsigned int size );
  */
 const char * node_encode ( struct node * self, const char * str );
 
+/**
+ * Grab the next available node from the provided pools.
+ *
+ * @param self the list of available node pools
+ * @param pool_idx the current position in the node pool list
+ * @param pool_count the number of available given pools
+ * @return the requested node, or NULL if no such node is available
+ */
+struct node * pool_pull_node ( struct node_pool ** self,
+                unsigned int * pool_idx, unsigned int pool_count );
+
 #endif /* NODE_H */
 
