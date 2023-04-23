@@ -96,7 +96,6 @@ static bool realloc_check ( struct expression * self )
  * @param node the node to be added
  * @return the committed node, or NULL if the operation could not be completed
  */
-
 static inline bool commit_node ( struct expression * self, struct node * node )
 {
         if ( !realloc_check ( self ) )
@@ -141,7 +140,6 @@ static void sya_handle_op ( struct stack * op_stack, struct stack * out_stack,
  * @param op_stack the operator stack
  * @param out_stack the output stack
  */
-
 static void sya_handle_rparen ( struct stack * op_stack,
                 struct stack * out_stack )
 {
@@ -282,10 +280,9 @@ void expression_destruct ( struct expression * self )
         if ( self ) {
                 free ( self->data );
                 stack_destruct ( self->postfix );
+		free ( self );
+		debug_puts ( "Expression destructed" );
         }
-
-        free ( self );
-        debug_puts ( "Expression destructed" );
 }
 
 void expression_perror ( struct expression * self, const char * msg,

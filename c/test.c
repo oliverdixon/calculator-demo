@@ -7,12 +7,10 @@
  */
 
 #include <stdlib.h>
-#include <errno.h>
-#include <string.h>
+#include <stdio.h>
 
 #include "node.h"
 #include "expr.h"
-#include "debug.h"
 
 /**
  * A wrapper to test all aspects of the Expression interface, including
@@ -64,8 +62,6 @@ int main ( int argc, char ** argv )
                 status = EXIT_FAILURE;
         } else if ( test_expression ( pool, argv [ 1 ] ) == -1 )
                 status = EXIT_FAILURE;
-
-        pool_destruct ( pool );
 
         return status;
 }

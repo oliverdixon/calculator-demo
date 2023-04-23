@@ -90,11 +90,11 @@ struct stack * stack_initialise ( unsigned int capacity )
 
 void stack_destruct ( struct stack * self )
 {
-        if ( self )
+        if ( self ) {
                 free ( self->data );
-
-        free ( self );
-        debug_puts ( "Stack destructed" );
+		free ( self );
+		debug_puts ( "Stack destructed" );
+	}
 }
 
 void * stack_pop ( struct stack * self )

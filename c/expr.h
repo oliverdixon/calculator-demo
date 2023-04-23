@@ -17,8 +17,6 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include <stdbool.h>
-
 #include "node.h"
 
 /**
@@ -40,10 +38,11 @@ enum expr_status {
 
 /**
  * Initialise an expression type with the given string. This string is taken as
- * an infix expression.
+ * an infix expression. If this function fails, then 'errno' is set
+ * appropriately.
  *
  * @param expr the infix string expression to be tokenised
- * @return the created expression
+ * @return the created expression, or NULL on failure
  */
 struct expression * expression_initialise ( const char * expr,
         unsigned int capacity );
