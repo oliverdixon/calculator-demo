@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h> // stack_print (printf)
+#include <stdio.h>
 
 #include "debug.h"
 #include "stack.h"
@@ -119,7 +119,7 @@ void * stack_push ( struct stack * self, void * node )
 void stack_print ( struct stack * self, char * ( * printer ) ( void *,
                 char *, unsigned int ) )
 {
-        const unsigned int BUFFER_SIZE = 16;
+        const unsigned int BUFFER_SIZE = 20;
         char buffer [ BUFFER_SIZE ];
 
         printf ( "Stack Capacity: %d\nStack Size: %d\n", self->capacity,

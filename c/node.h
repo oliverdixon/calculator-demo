@@ -147,15 +147,14 @@ enum node_type node_get_type ( struct node * self );
 enum node_operator node_op_get_type ( struct node * self );
 
 /**
- * Determines the precedence relationship between two given operator types
+ * Determines the precedence relationship between two given operator nodes
  *
- * @param op1 the first operator
- * @param op2 the second operator
+ * @param o1 the first operator node
+ * @param o2 the second operator node
  * @return the precedence of the first operator in relation to the precedence of
  *      the second one
  */
-enum node_precedence node_test_precedence ( enum node_operator op1,
-        enum node_operator op2 );
+enum node_precedence node_test_prec ( struct node * o1, struct node * o2 );
 
 #endif /* NODE_H */
 

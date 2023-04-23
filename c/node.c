@@ -342,22 +342,27 @@ enum node_operator node_op_get_type ( struct node * self )
         return self->op;
 }
 
-enum node_precedence node_test_precedence ( enum node_operator op1,
-                enum node_operator op2 )
+enum node_precedence node_test_prec ( struct node * o1, struct node * o2 )
 {
+        assert ( o1->type == NODE_OPERATOR && o2->type == NODE_OPERATOR );
+
+        enum node_operator op1 = o1->op, op2 = o2->op;
+
         /* Rule #1: Exponentiation has the greatest precedence. */
         if ( op1 == NODE_OP_EXP ) return NODE_PREC_GREATER;
         if ( op2 == NODE_OP_EXP ) return NODE_PREC_LESSER;
 
         /* Rule #2: Addition has the same precedence as subtraction, and
-         * division has the same precedence as division. */
+         * division has the same precedence as division. Note that, as according
+         * to the enumerable definition, the operators' integer values are
+         * listed in reverse-precedence order. */
         if ( op1 > op2 ) {
                 if ( ( op1 == NODE_OP_ADD && op2 == NODE_OP_SUBTRACT ) || (
                                 op1 == NODE_OP_DIVIDE &&
                                 op2 == NODE_OP_MULTIPLY ) )
                         return NODE_PREC_LASSOC;
 
-                return NODE_PREC_GREATER;
+                return NODE_PREC_LESSER;
         }
 
         /* Rule #3: The converse case of Rule #2. */
@@ -367,7 +372,7 @@ enum node_precedence node_test_precedence ( enum node_operator op1,
                                 op1 == NODE_OP_MULTIPLY ) )
                         return NODE_PREC_LASSOC;
 
-                return NODE_PREC_LESSER;
+                return NODE_PREC_GREATER;
         }
 
         /* Note: As it stands, all implemented operators are left-associative.

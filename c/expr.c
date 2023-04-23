@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "node.h"
 #include "debug.h"
@@ -145,18 +146,87 @@ static enum expr_status tokenise ( struct expression * self,
         return status;
 }
 
+/**
+ * Handle an incoming operator node during the execution of the Shunting Yard
+ * algorithm, as according to the rules defined by the 'postfix' function.
+ *
+ * @param op_stack the operator stack
+ * @param out_stack the output stack
+ * @param node the incoming operator node
+ */
+static void sya_handle_op ( struct stack * op_stack, struct stack * out_stack,
+                struct node * node )
+{
+        struct node * top;
+        enum node_precedence prec;
+
+        assert ( node_get_type ( node ) == NODE_OPERATOR );
+
+        while ( ( top = stack_peek ( op_stack ) ) &&
+                        node_get_type ( top ) != NODE_LPAREN &&
+                        ( ( prec = node_test_prec ( top, node ) ) ==
+                                NODE_PREC_GREATER ||
+                                prec == NODE_PREC_LASSOC ) )
+
+                stack_push ( out_stack, stack_pop ( op_stack ) );
+
+        stack_push ( op_stack, node );
+}
+
+/**
+ * Convert the tokenised expression into an equivalent postfix (a.k.a.
+ * Reverse-Polish notation) using the Shunting Yard algorithm (SYA). This
+ * function implements a variant of the SYA by executing the following rules:
+ *
+ *  - If the next node is a literal: push it to the output stack;
+ *
+ *  - If the next node is an operator: while the top of the operator stack
+ *    exists and is not a left parenthesis, and has greater-or-equivalent
+ *    precedence as the incoming operator, pop from the operator stack onto the
+ *    output stack. Then, push the incoming operator onto the operator stack.
+ *
+ *  - TODO: The handling of parentheses is not yet implemented.
+ *
+ * @param self the expression to convert
+ */
+
 static enum expr_status postfix ( struct expression * self )
 {
         struct stack * op_stack = stack_initialise ( 0 );
+        struct stack * out_stack = stack_initialise ( 0 );
+        struct node * node;
 
-        ( void ) self;
+        // TODO: Move the output stack into the expression instance.
 
-        if ( !op_stack )
+        if ( !op_stack || !out_stack ) {
+                stack_destruct ( op_stack );
+                stack_destruct ( out_stack );
                 return EXPR_NOEXPR;
+        }
 
-        // TODO: SYA
+        for ( unsigned int i = 0; i < self->idx; i++ ) {
+                node = self->data [ i ];
+                switch ( node_get_type ( node ) ) {
+                        case NODE_LITERAL:
+                                stack_push ( out_stack, node );
+                                break;
+
+                        case NODE_OPERATOR:
+                                sya_handle_op ( op_stack, out_stack, node );
+                                break;
+
+                        default:
+                                assert ( false );
+                                break; // TODO
+                }
+        }
+
+        while ( ( node = stack_peek ( op_stack ) ) )
+                stack_push ( out_stack, stack_pop ( op_stack ) );
 
         stack_destruct ( op_stack );
+        stack_print ( out_stack, node_format );
+        stack_destruct ( out_stack );
         return EXPR_OK;
 }
 
@@ -185,10 +255,11 @@ struct expression * expression_initialise ( const char * expr,
 
                 tokenise ( self, pools, pool_count );
 
-                debug_puts ( self->status == EXPR_OK ? "Expression initialised"
-                        : "Expression initialised with faults" );
-
-                postfix ( self );
+                if ( self->status == EXPR_OK ) {
+                        debug_puts ( "Expression initialised" );
+                        postfix ( self );
+                } else
+                        debug_puts ( "Expression initialised with faults" );
         }
 
         return self;
