@@ -345,12 +345,15 @@ enum node_operator node_op_get_type ( struct node * self )
 enum node_precedence node_test_prec ( struct node * o1, struct node * o2 )
 {
         assert ( o1->type == NODE_OPERATOR && o2->type == NODE_OPERATOR );
-
         enum node_operator op1 = o1->op, op2 = o2->op;
 
-        /* Rule #1: Exponentiation has the greatest precedence. */
-        if ( op1 == NODE_OP_EXP ) return NODE_PREC_GREATER;
-        if ( op2 == NODE_OP_EXP ) return NODE_PREC_LESSER;
+        /* Rule #1: Exponentiation has the greatest precedence and is
+         * right-associative. */
+        if ( op1 == NODE_OP_EXP )
+                if ( op2 == NODE_OP_EXP )
+                        return NODE_PREC_SAME;
+                else
+                        return NODE_PREC_GREATER;
 
         /* Rule #2: Addition has the same precedence as subtraction, and
          * division has the same precedence as division. Note that, as according
@@ -358,8 +361,8 @@ enum node_precedence node_test_prec ( struct node * o1, struct node * o2 )
          * listed in reverse-precedence order. */
         if ( op1 > op2 ) {
                 if ( ( op1 == NODE_OP_ADD && op2 == NODE_OP_SUBTRACT ) || (
-                                op1 == NODE_OP_DIVIDE &&
-                                op2 == NODE_OP_MULTIPLY ) )
+                                op1 == NODE_OP_MULTIPLY &&
+                                op2 == NODE_OP_DIVIDE ) )
                         return NODE_PREC_LASSOC;
 
                 return NODE_PREC_LESSER;
@@ -368,16 +371,16 @@ enum node_precedence node_test_prec ( struct node * o1, struct node * o2 )
         /* Rule #3: The converse case of Rule #2. */
         if ( op1 < op2 ) {
                 if ( ( op2 == NODE_OP_ADD && op1 == NODE_OP_SUBTRACT ) || (
-                                op2 == NODE_OP_DIVIDE &&
-                                op1 == NODE_OP_MULTIPLY ) )
+                                op1 == NODE_OP_MULTIPLY &&
+                                op2 == NODE_OP_DIVIDE ) )
                         return NODE_PREC_LASSOC;
 
                 return NODE_PREC_GREATER;
         }
 
-        /* Note: As it stands, all implemented operators are left-associative.
-         * Rules are based on the C standards for the associativity of
-         * arithmetic operators. */
+        /* Note: As it stands, all implemented operators except exponentiation
+         * are left-associative. Rules are based on the C standards for the
+         * associativity of arithmetic operators. */
         return NODE_PREC_LASSOC;
 }
 

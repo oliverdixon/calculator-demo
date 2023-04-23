@@ -58,6 +58,7 @@ static const char * status_str ( enum expr_status status )
                 case EXPR_NONODE:    return "Insufficient nodes";
                 case EXPR_BADSYMBOL: return "Unexpected symbol";
                 case EXPR_NOEXPR:    return "Insufficient expression capacity";
+                case EXPR_INTERR:    return "Internal error; please report!";
 
                 default: return "Unknown expression status";
         }
@@ -174,18 +175,48 @@ static void sya_handle_op ( struct stack * op_stack, struct stack * out_stack,
 }
 
 /**
+ * Handle an incoming right parenthesis node during the execution of the
+ * Shunting Yard algorithm, as according to the rules defined by the "postfix"
+ * function.
+ *
+ * @param op_stack the operator stack
+ * @param out_stack the output stack
+ */
+
+static void sya_handle_rparen ( struct stack * op_stack,
+                struct stack * out_stack )
+{
+        struct node * top;
+
+        while ( ( top = stack_peek ( op_stack ) ) &&
+                        node_get_type ( top ) != NODE_LPAREN )
+                stack_push ( out_stack, stack_pop ( op_stack ) );
+
+        assert ( node_get_type ( top ) == NODE_LPAREN );
+        stack_pop ( op_stack );
+}
+
+/**
  * Convert the tokenised expression into an equivalent postfix (a.k.a.
  * Reverse-Polish notation) using the Shunting Yard algorithm (SYA). This
  * function implements a variant of the SYA by executing the following rules:
  *
- *  - If the next node is a literal: push it to the output stack;
+ *  - If the next node is a literal: push it to the output stack.
  *
  *  - If the next node is an operator: while the top of the operator stack
  *    exists and is not a left parenthesis, and has greater-or-equivalent
  *    precedence as the incoming operator, pop from the operator stack onto the
  *    output stack. Then, push the incoming operator onto the operator stack.
  *
- *  - TODO: The handling of parentheses is not yet implemented.
+ *  - If the next node is a left parenthesis: push it to the operator stack.
+ *
+ *  - If the next node is a right parenthesis: pop the operator stack symbols
+ *    onto the output stack until a left parenthesis is found. Then, discard
+ *    both the left and right parentheses.
+ *
+ * TODO: Move the output stack into the expression instance.
+ * TODO: Implement a proper error-handling interface.
+ * TODO: Implement a stack-based evaluator for the resultant output stack.
  *
  * @param self the expression to convert
  */
@@ -195,8 +226,6 @@ static enum expr_status postfix ( struct expression * self )
         struct stack * op_stack = stack_initialise ( 0 );
         struct stack * out_stack = stack_initialise ( 0 );
         struct node * node;
-
-        // TODO: Move the output stack into the expression instance.
 
         if ( !op_stack || !out_stack ) {
                 stack_destruct ( op_stack );
@@ -215,9 +244,17 @@ static enum expr_status postfix ( struct expression * self )
                                 sya_handle_op ( op_stack, out_stack, node );
                                 break;
 
-                        default:
-                                assert ( false );
-                                break; // TODO
+                        case NODE_LPAREN:
+                                stack_push ( op_stack, node );
+                                break;
+
+                        case NODE_RPAREN:
+                                sya_handle_rparen ( op_stack, out_stack );
+                                break;
+
+                        case NODE_UNKNOWN:
+                        case NODE_COUNT:
+                                return EXPR_INTERR;
                 }
         }
 

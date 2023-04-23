@@ -33,6 +33,7 @@ enum expr_status {
         EXPR_NONODE,
         EXPR_BADSYMBOL,
         EXPR_NOEXPR,
+        EXPR_INTERR,
 };
 
 /**
