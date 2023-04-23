@@ -1,12 +1,7 @@
-# Dependencies
-c/*.d
-
 # Binaries
-c/*.out
-c/*.o
-c/*.gch
-c/*.sh
-c/calculator
+*.sh
+c/debug
+c/release
 
 # Vim swap files
 .*.sw*
