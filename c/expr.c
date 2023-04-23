@@ -25,12 +25,7 @@ struct expression {
         const char * expr_head;
 
         /**
-         * The transient status of the expression
-         */
-        enum expr_status status;
-
-        /**
-         * Internal nodal representation of the expression
+         * Internal nodal representation of the infix expression
          */
         struct node ** data;
 
@@ -43,6 +38,11 @@ struct expression {
          * The current node-under-inspection in the nodal array.
          */
         unsigned int idx;
+
+        /**
+         * The postfix stack
+         */
+        struct stack * postfix;
 };
 
 /**
@@ -107,47 +107,6 @@ static inline bool commit_node ( struct expression * self, struct node * node )
 }
 
 /**
- * Tokenise the expression in the given expression to its equivalent internal
- * representation, according to the standard rules of arithmetic defined by the
- * Node interface.
- *
- * @param self the expression of concern
- * @param pools the list of available node pools
- * @param pool_count the number of available given pools
- * @return a status code according to the standard expression error schema
- */
-static enum expr_status tokenise ( struct expression * self,
-                struct node_pool ** pools, unsigned int pool_count )
-{
-        struct node * node;
-        unsigned int pool_idx = 0;
-        const char * new_rh = NULL;
-        enum expr_status status = EXPR_OK;
-
-        for ( ; *self->expr_head && status == EXPR_OK;
-                        self->expr_head = new_rh )
-
-                /* Pull a new node from the pool */
-                if ( ! ( node = pool_pull_node ( pools, &pool_idx,
-                                pool_count ) ) )
-                        status = EXPR_NONODE;
-
-                /* Tokenise. If the new read head matches the old one, then we
-                 * have encountered a troublesome symbol. */
-                else if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
-                                self->expr_head )
-                        status = EXPR_BADSYMBOL;
-
-                /* Now the token is successfully parsed, we can attempt to
-                 * commit the populated node to the expression storage array. */
-                else if ( !commit_node ( self, node ) )
-                        status = EXPR_NOEXPR;
-
-        self->status = status;
-        return status;
-}
-
-/**
  * Handle an incoming operator node during the execution of the Shunting Yard
  * algorithm, as according to the rules defined by the 'postfix' function.
  *
@@ -196,8 +155,8 @@ static void sya_handle_rparen ( struct stack * op_stack,
         stack_pop ( op_stack );
 }
 
-/**
- * Convert the tokenised expression into an equivalent postfix (a.k.a.
+/* NOTES FOR THE POSTFIX CONVERTER
+ *
  * Reverse-Polish notation) using the Shunting Yard algorithm (SYA). This
  * function implements a variant of the SYA by executing the following rules:
  *
@@ -214,22 +173,19 @@ static void sya_handle_rparen ( struct stack * op_stack,
  *    onto the output stack until a left parenthesis is found. Then, discard
  *    both the left and right parentheses.
  *
- * TODO: Move the output stack into the expression instance.
- * TODO: Implement a proper error-handling interface.
+ * TODO: Implement a proper error-handling interface, detecting mismatched
+ *      parentheses or operands, etc. Remove as many assertions as reasonable.
  * TODO: Implement a stack-based evaluator for the resultant output stack.
- *
- * @param self the expression to convert
  */
 
-static enum expr_status postfix ( struct expression * self )
+enum expr_status expression_postfix ( struct expression * self )
 {
         struct stack * op_stack = stack_initialise ( 0 );
-        struct stack * out_stack = stack_initialise ( 0 );
+        struct stack * out_stack = self->postfix;
         struct node * node;
 
-        if ( !op_stack || !out_stack ) {
+        if ( !op_stack ) {
                 stack_destruct ( op_stack );
-                stack_destruct ( out_stack );
                 return EXPR_NOEXPR;
         }
 
@@ -262,52 +218,92 @@ static enum expr_status postfix ( struct expression * self )
                 stack_push ( out_stack, stack_pop ( op_stack ) );
 
         stack_destruct ( op_stack );
+        debug_puts ( "Expression converted to RPN" );
         stack_print ( out_stack, node_format );
-        stack_destruct ( out_stack );
         return EXPR_OK;
 }
 
-void expression_status_print ( struct expression * self )
-{
-        ( void ) status_str;
-
-        if ( self->status == EXPR_BADSYMBOL )
-                debug_printf ( "%s at: \"%s\"\n", status_str ( self->status ),
-                        self->expr_head );
-        else
-                debug_puts ( status_str ( self->status ) );
-}
-
 struct expression * expression_initialise ( const char * expr,
-                struct node_pool ** pools, unsigned int pool_count )
+                unsigned int capacity )
 {
         struct expression * self;
 
-        if ( ( self = malloc ( sizeof ( struct expression ) ) ) ) {
+        if ( ! ( self = malloc ( sizeof ( struct expression ) ) ) ||
+                        ! ( self->postfix = stack_initialise ( capacity ) ) ) {
+                free ( self );
+                self = NULL;
+        } else {
                 self->data = NULL;
                 self->capacity = 1;
                 self->idx = 0;
                 self->expr_head = expr;
-                self->status = EXPR_OK;
 
-                tokenise ( self, pools, pool_count );
-
-                if ( self->status == EXPR_OK ) {
-                        debug_puts ( "Expression initialised" );
-                        postfix ( self );
-                } else
-                        debug_puts ( "Expression initialised with faults" );
+                debug_puts ( "Expression initialised" );
         }
 
         return self;
 }
 
+enum expr_status expression_tokenise ( struct expression * self,
+                struct node_pool ** pools, unsigned int pool_count )
+{
+        struct node * node;
+        unsigned int pool_idx = 0;
+        const char * new_rh = NULL;
+        enum expr_status status = EXPR_OK;
+
+        for ( ; *self->expr_head && status == EXPR_OK;
+                        self->expr_head = new_rh )
+
+                /* Pull a new node from the pool */
+                if ( ! ( node = pool_pull_node ( pools, &pool_idx,
+                                pool_count ) ) )
+                        status = EXPR_NONODE;
+
+                /* Tokenise. If the new read head matches the old one, then we
+                 * have encountered a troublesome symbol. */
+                else if ( ( new_rh = node_encode ( node, self->expr_head ) ) ==
+                                self->expr_head )
+                        status = EXPR_BADSYMBOL;
+
+                /* Now the token is successfully parsed, we can attempt to
+                 * commit the populated node to the expression storage array. */
+                else if ( !commit_node ( self, node ) )
+                        status = EXPR_NOEXPR;
+
+        debug_puts ( ( status == EXPR_OK ) ? "Expression tokenised" :
+                "Expression tokenised with faults" );
+
+        return status;
+}
+
 void expression_destruct ( struct expression * self )
 {
-        if ( self )
+        if ( self ) {
                 free ( self->data );
+                stack_destruct ( self->postfix );
+        }
 
         free ( self );
         debug_puts ( "Expression destructed" );
+}
+
+void expression_perror ( struct expression * self, const char * msg,
+                enum expr_status status )
+{
+        if ( msg ) {
+                fputs ( msg, stderr );
+                fputs ( ": ", stderr );
+        }
+
+        fputs ( status_str ( status ), stderr );
+
+        if ( status == EXPR_BADSYMBOL && *self->expr_head != '\0' ) {
+                fputs ( " starting at \"", stderr );
+                fputs ( self->expr_head, stderr );
+                fputc ( '\"', stderr );
+        }
+
+        fputs ( ".\n", stderr );
 }
 

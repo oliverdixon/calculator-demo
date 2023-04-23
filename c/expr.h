@@ -6,7 +6,7 @@
  *   - Tokenisation of an expression from a string form into an equivalent
  *     internal representation (IR);
  *
- *   - [TODO] Conversion of the IR from the infix order to postfix order with an
+ *   - Conversion of the IR from the infix order to postfix order with an
  *     implementation of operator-precedence parsing; and
  *
  *   - [TODO] Stack-based evaluation of the expression to a numerical value.
@@ -16,6 +16,8 @@
 
 #ifndef EXPR_H
 #define EXPR_H
+
+#include <stdbool.h>
 
 #include "node.h"
 
@@ -38,16 +40,13 @@ enum expr_status {
 
 /**
  * Initialise an expression type with the given string. This string is taken as
- * an infix expression and tokenised as such using the given node pool array. If
- * insufficient nodes are available, NULL is returned.
+ * an infix expression.
  *
  * @param expr the infix string expression to be tokenised
- * @param pools a list of node pools available to the parser
- * @param pool_count the number of node pools provided
- * @return the created expression type
+ * @return the created expression
  */
 struct expression * expression_initialise ( const char * expr,
-        struct node_pool ** pools, unsigned int pool_count );
+        unsigned int capacity );
 
 /**
  * Shallow-destruct an entire expression type: constituent nodes are not freed.
@@ -57,12 +56,37 @@ struct expression * expression_initialise ( const char * expr,
 void expression_destruct ( struct expression * self );
 
 /**
- * Uses the debugging channels to print a human-readable report of the given
- * expression. If debugging is not enabled, this function does nothing.
+ * Tokenise the expression in the given expression to its equivalent internal
+ * representation, according to the standard rules of arithmetic defined by the
+ * Node interface.
  *
- * @param self the expression to examine
+ * @param self the expression
+ * @param pools the list of available node pools
+ * @param pool_count the number of available given pools
+ * @return a status code according to the standard expression error schema
  */
-void expression_status_print ( struct expression * self );
+enum expr_status expression_tokenise ( struct expression * self,
+        struct node_pool ** pools, unsigned int pool_count );
+
+/**
+ * Format and print a human-readable report of the status of the given
+ * expression, prefixed with an optional message, to the standard error buffer.
+ *
+ * @param self the expression
+ * @param msg a prefix string, or NULL
+ * @param status the status to interpret
+ */
+void expression_perror ( struct expression * self, const char * msg,
+        enum expr_status status );
+
+/**
+ * Convert the tokenised expression into an equivalent postfix (a.k.a.
+ * Reverse-Polish notation.
+ *
+ * @param self the expression to convert
+ * @return the new status of the given expression
+ */
+enum expr_status expression_postfix ( struct expression * self );
 
 #endif /* EXPR_H */
 

@@ -300,8 +300,17 @@ const char * node_encode ( struct node * self, const char * str )
         switch ( *str ) {
 
                 /* Parentheses */
-                case '(': str += encode_prn ( self, NODE_LPAREN ); break;
-                case ')': str += encode_prn ( self, NODE_RPAREN ); break;
+                case '(':
+                case '[':
+                case '{':
+                        str += encode_prn ( self, NODE_LPAREN );
+                        break;
+
+                case ')':
+                case ']':
+                case '}':
+                        str += encode_prn ( self, NODE_RPAREN );
+                        break;
 
                 /* Operators */
                 case '^': str += encode_opr ( self, NODE_OP_EXP      ); break;
