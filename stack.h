@@ -62,7 +62,7 @@ void * stack_push ( struct stack * self, void * node );
  *      buffer, given a node, buffer, and buffer capacity
  */
 void stack_print ( struct stack * self, char * ( * printer ) ( void *, char *,
-        unsigned int ) );
+    unsigned int ) );
 
 #endif /* STACK_H */
 

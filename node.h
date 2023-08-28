@@ -39,45 +39,45 @@ typedef float number_t;
  * The type of a node, indicating the type of data encoded within
  */
 enum node_type {
-        NODE_UNKNOWN,
-        NODE_OPERATOR,
-        NODE_LITERAL,
-        NODE_LPAREN,
-        NODE_RPAREN,
+    NODE_UNKNOWN,
+    NODE_OPERATOR,
+    NODE_LITERAL,
+    NODE_LPAREN,
+    NODE_RPAREN,
 
-        NODE_COUNT
+    NODE_COUNT
 };
 
 /**
  * The type of operator encoded by a node, where applicable
  */
 enum node_operator {
-        NODE_OP_UNKNOWN,
-        NODE_OP_EXP,
-        NODE_OP_DIVIDE,
-        NODE_OP_MULTIPLY,
-        NODE_OP_ADD,
-        NODE_OP_SUBTRACT,
+    NODE_OP_UNKNOWN,
+    NODE_OP_EXP,
+    NODE_OP_DIVIDE,
+    NODE_OP_MULTIPLY,
+    NODE_OP_ADD,
+    NODE_OP_SUBTRACT,
 
-        NODE_OP_COUNT
+    NODE_OP_COUNT
 };
 
 /**
  * The result of a comparison between the precedence of two operator nodes
  */
 enum node_precedence {
-        NODE_PREC_GREATER, /* The first operator has greater precedence */
-        NODE_PREC_LESSER,  /* The first operator has lesser precedence  */
-        NODE_PREC_SAME,    /* The operators have the same precedence    */
-        NODE_PREC_LASSOC,  /* As above, but the first operator is left-
-                              associative.                              */
+    NODE_PREC_GREATER, /* The first operator has greater precedence */
+    NODE_PREC_LESSER,  /* The first operator has lesser precedence  */
+    NODE_PREC_SAME,    /* The operators have the same precedence    */
+    NODE_PREC_LASSOC,  /* As above, but the first operator is left-
+                          associative.                              */
 };
 
 /**
  * Initialise a new node pool of a given fixed capacity.
  *
  * @param capacity the fixed capacity of the node pool. If this is zero, a
- *        sensible default is assumed.
+ *    sensible default is assumed.
  * @return the address of the new pool
  */
 struct node_pool * pool_initialise ( unsigned int capacity );
@@ -105,7 +105,7 @@ struct node * pool_new_node ( struct node_pool * self );
  * @param buffer the destination buffer
  * @param size the capacity of the given buffer
  * @return the populated buffer, or NULL if the given buffer was unreasonably
- *        small
+ *    small
  */
 char * node_format ( void * self, char * buffer, unsigned int size );
 
@@ -128,7 +128,7 @@ const char * node_encode ( struct node * self, const char * str );
  * @return the requested node, or NULL if no such node is available
  */
 struct node * pool_pull_node ( struct node_pool ** self,
-        unsigned int * pool_idx, unsigned int pool_count );
+    unsigned int * pool_idx, unsigned int pool_count );
 
 /**
  * Retrieves the type of the given node

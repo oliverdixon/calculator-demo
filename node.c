@@ -18,38 +18,38 @@
  * The transparent node
  */
 struct node {
-        /**
-         * The internal type of the node: use this to correctly decode the node.
-         */
-        enum node_type type;
-        
-        /**
-         * The data encoded by the node.
-         */
-        union {
-                enum node_operator op;
-                number_t value;
-        };
+    /**
+     * The internal type of the node: use this to correctly decode the node.
+     */
+    enum node_type type;
+    
+    /**
+     * The data encoded by the node.
+     */
+    union {
+        enum node_operator op;
+        number_t value;
+    };
 };
 
 /**
  * The transparent node pool
  */
 struct node_pool {
-        /**
-         * The fixed capacity of the pool
-         */
-        unsigned int capacity;
+    /**
+     * The fixed capacity of the pool
+     */
+    unsigned int capacity;
 
-        /**
-         * The current occupation of the pool
-         */
-        unsigned int used;
+    /**
+     * The current occupation of the pool
+     */
+    unsigned int used;
 
-        /**
-         * The node array
-         */
-        struct node * data;
+    /**
+     * The node array
+     */
+    struct node * data;
 };
 
 /**
@@ -59,7 +59,7 @@ struct node_pool {
  */
 static inline bool is_full ( struct node_pool * self )
 {
-        return self->used == self->capacity;
+    return self->used == self->capacity;
 }
 
 /**
@@ -70,12 +70,12 @@ static inline bool is_full ( struct node_pool * self )
  * @return the number of bytes by which the input string should be advanced
  */
 static inline unsigned int encode_opr ( struct node * self,
-                enum node_operator opr )
+        enum node_operator opr )
 {
-        self->type = NODE_OPERATOR;
-        self->op = opr;
+    self->type = NODE_OPERATOR;
+    self->op = opr;
 
-        return sizeof ( char );
+    return sizeof ( char );
 }
 
 /**
@@ -87,10 +87,10 @@ static inline unsigned int encode_opr ( struct node * self,
  */
 static inline unsigned int encode_prn ( struct node * self, enum node_type prn )
 {
-        assert ( prn == NODE_LPAREN || prn == NODE_RPAREN );
-        self->type = prn;
+    assert ( prn == NODE_LPAREN || prn == NODE_RPAREN );
+    self->type = prn;
 
-        return sizeof ( char );
+    return sizeof ( char );
 }
 
 /**
@@ -103,19 +103,19 @@ static inline unsigned int encode_prn ( struct node * self, enum node_type prn )
  */
 static inline unsigned int encode_lit ( struct node * self, const char * str )
 {
-        char * end_ptr;
-        number_t val;
+    char * end_ptr;
+    number_t val;
 
-        errno = 0;
-        val = strtof ( str, &end_ptr );
+    errno = 0;
+    val = strtof ( str, &end_ptr );
 
-        if ( !errno && end_ptr != str ) {
-                self->type = NODE_LITERAL;
-                self->value = val;
-        } else
-                return 0;
+    if ( !errno && end_ptr != str ) {
+        self->type = NODE_LITERAL;
+        self->value = val;
+    } else
+        return 0;
 
-        return ( unsigned int ) ( end_ptr - str );
+    return ( unsigned int ) ( end_ptr - str );
 }
 
 /**
@@ -129,27 +129,27 @@ static inline unsigned int encode_lit ( struct node * self, const char * str )
  * @return the number of characters written to the destination string
  */
 static unsigned int simple_writeout ( char * dest, const char * src,
-                unsigned int size )
+        unsigned int size )
 {
-        const unsigned int srclen = ( unsigned int ) strlen ( src );
-        assert ( size > 0 );
+    const unsigned int srclen = ( unsigned int ) strlen ( src );
+    assert ( size > 0 );
 
-        if ( srclen >= size ) {
-                size--;
-                for ( unsigned int i = 0; i < size; i++ )
-                        /* The strings are short, and since we already know the
-                         * source and destination string lengths, this linear
-                         * approach is desirable to strncpy(3), which invariably
-                         * recalculates the source length. We cannot necessarily
-                         * just end the string early by replacing a character
-                         * with a NULL-terminator, since the source string may
-                         * be a string literal, existing in read-only memory. */
+    if ( srclen >= size ) {
+        size--;
+        for ( unsigned int i = 0; i < size; i++ )
+            /* The strings are short, and since we already know the
+             * source and destination string lengths, this linear
+             * approach is desirable to strncpy(3), which invariably
+             * recalculates the source length. We cannot necessarily
+             * just end the string early by replacing a character
+             * with a NULL-terminator, since the source string may
+             * be a string literal, existing in read-only memory. */
 
-                        dest [ i ] = src [ i ];
-        } else
-                strcpy ( dest, src );
+            dest [ i ] = src [ i ];
+    } else
+        strcpy ( dest, src );
 
-        return srclen;
+    return srclen;
 }
 
 /**
@@ -160,12 +160,12 @@ static unsigned int simple_writeout ( char * dest, const char * src,
  * @param size the capacity of the destination
  */
 static inline unsigned int formatter_literal ( struct node * self,
-                char * buffer, unsigned int size )
+        char * buffer, unsigned int size )
 {
-        int retval = snprintf ( buffer, size, "Literal: %.3f", ( double )
-                self->value );
+    int retval = snprintf ( buffer, size, "Literal: %.3f", ( double )
+        self->value );
 
-        return ( retval < 0 ) ? 0 : ( unsigned int ) retval;
+    return ( retval < 0 ) ? 0 : ( unsigned int ) retval;
 }
 
 /**
@@ -176,10 +176,10 @@ static inline unsigned int formatter_literal ( struct node * self,
  * @param size the capacity of the destination
  */
 static inline unsigned int formatter_not_implemented ( struct node * self,
-                char * buffer, unsigned int size )
+        char * buffer, unsigned int size )
 {
-        ( void ) self;
-        return simple_writeout ( buffer, "Not Implemented", size );
+    ( void ) self;
+    return simple_writeout ( buffer, "Not Implemented", size );
 }
 
 /**
@@ -190,18 +190,18 @@ static inline unsigned int formatter_not_implemented ( struct node * self,
  * @param size the capacity of the destination
  */
 static unsigned int formatter_operator ( struct node * self, char * buffer,
-                unsigned int size )
+        unsigned int size )
 {
-        static char * opstr [ ] = { "Unknown", "Power", "Divide",
-                "Multiply", "Add", "Subtract" };
-        unsigned int used;
+    static char * opstr [ ] = { "Unknown", "Power", "Divide",
+        "Multiply", "Add", "Subtract" };
+    unsigned int used;
 
-        assert ( sizeof ( opstr ) / sizeof ( *opstr ) == NODE_OP_COUNT );
-        used = simple_writeout ( buffer, "Operator: ", size );
+    assert ( sizeof ( opstr ) / sizeof ( *opstr ) == NODE_OP_COUNT );
+    used = simple_writeout ( buffer, "Operator: ", size );
 
-        return used + simple_writeout ( & ( buffer [ used ] ),
-                ( self->op >= 1 && self->op < NODE_OP_COUNT ) ?
-                        opstr [ self->op ] : opstr [ 0 ], size - used );
+    return used + simple_writeout ( & ( buffer [ used ] ),
+        ( self->op >= 1 && self->op < NODE_OP_COUNT ) ?
+            opstr [ self->op ] : opstr [ 0 ], size - used );
 }
 
 /**
@@ -212,184 +212,184 @@ static unsigned int formatter_operator ( struct node * self, char * buffer,
  * @param size the capacity of the destination
  */
 static inline unsigned int formatter_paren ( struct node * self, char * buffer,
-                unsigned int size )
+        unsigned int size )
 {
-        return simple_writeout ( buffer, ( self->type == NODE_LPAREN ) ?
-                "Left Parenthesis" : "Right Parenthesis", size );
+    return simple_writeout ( buffer, ( self->type == NODE_LPAREN ) ?
+        "Left Parenthesis" : "Right Parenthesis", size );
 }
 
 struct node_pool * pool_initialise ( unsigned int capacity )
 {
-        static const unsigned int DEFAULT_CAPACITY = 16;
-        struct node_pool * self;
+    static const unsigned int DEFAULT_CAPACITY = 16;
+    struct node_pool * self;
 
-        if ( !capacity )
-                capacity = DEFAULT_CAPACITY;
+    if ( !capacity )
+        capacity = DEFAULT_CAPACITY;
 
-        if ( ( self = malloc ( sizeof ( struct node_pool ) ) ) )
-                if ( ! ( self->data = malloc ( sizeof ( struct node ) *
-                                capacity ) ) ) {
-                        free ( self );
-                        self = NULL;
-                } else {
-                        self->capacity = capacity;
-                        self->used = 0;
-                        debug_puts ( "Node pool initialised" );
-                }
+    if ( ( self = malloc ( sizeof ( struct node_pool ) ) ) )
+        if ( ! ( self->data = malloc ( sizeof ( struct node ) *
+                capacity ) ) ) {
+            free ( self );
+            self = NULL;
+        } else {
+            self->capacity = capacity;
+            self->used = 0;
+            debug_puts ( "Node pool initialised" );
+        }
 
-        return self;
+    return self;
 }
 
 void pool_destruct ( struct node_pool * self )
 {
-        if ( self ) {
-                free ( self->data );
-                free ( self );
-                debug_puts ( "Node pool destructed" );
-        }
+    if ( self ) {
+        free ( self->data );
+        free ( self );
+        debug_puts ( "Node pool destructed" );
+    }
 }
 
 struct node * pool_new_node ( struct node_pool * self )
 {
-        struct node * node = NULL;
+    struct node * node = NULL;
 
-        if ( !is_full ( self ) )
-                node = & ( self->data [ self->used++ ] );
+    if ( !is_full ( self ) )
+        node = & ( self->data [ self->used++ ] );
 
-        return node;
+    return node;
 }
 
 char * node_format ( void * self, char * buffer, unsigned int size )
 {
-        const unsigned int MINIMUM_LENGTH = 16;
-        static unsigned int ( * const formatter [ NODE_COUNT ] )
-                ( struct node *, char *, unsigned int )
-                        = { formatter_not_implemented, /* Unknown         */
-                            formatter_operator,        /* Operator        */
-                            formatter_literal,         /* Literal         */
-                            formatter_paren,           /* (L) Parenthesis */
-                            formatter_paren,           /* (R) Parenthesis */
-                    };
+    const unsigned int MINIMUM_LENGTH = 16;
+    static unsigned int ( * const formatter [ NODE_COUNT ] )
+        ( struct node *, char *, unsigned int )
+            = { formatter_not_implemented, /* Unknown     */
+                formatter_operator,    /* Operator    */
+                formatter_literal,     /* Literal     */
+                formatter_paren,       /* (L) Parenthesis */
+                formatter_paren,       /* (R) Parenthesis */
+            };
 
-        if ( size < MINIMUM_LENGTH ) {
-                errno = EINVAL;
-                return NULL;
-        }
+    if ( size < MINIMUM_LENGTH ) {
+        errno = EINVAL;
+        return NULL;
+    }
 
-        assert ( sizeof ( formatter ) / sizeof ( *formatter ) == NODE_COUNT );
+    assert ( sizeof ( formatter ) / sizeof ( *formatter ) == NODE_COUNT );
 
-        /* The formatters will always add a NULL-terminator; if it had intended
-         * to overwrite the available string space, then the output will be
-         * truncated, so we add a three-character marker to indicate as such. */
-        if ( formatter [ ( ( struct node * ) self )->type ]
-                        ( self, buffer, size ) >= size ) {
-                buffer [ size - 2 ] = '.';
-                buffer [ size - 3 ] = '.';
-                buffer [ size - 4 ] = '.';
-        }
+    /* The formatters will always add a NULL-terminator; if it had intended
+     * to overwrite the available string space, then the output will be
+     * truncated, so we add a three-character marker to indicate as such. */
+    if ( formatter [ ( ( struct node * ) self )->type ]
+            ( self, buffer, size ) >= size ) {
+        buffer [ size - 2 ] = '.';
+        buffer [ size - 3 ] = '.';
+        buffer [ size - 4 ] = '.';
+    }
 
-        return buffer;
+    return buffer;
 }
 
 const char * node_encode ( struct node * self, const char * str )
 {
-        self->type = NODE_UNKNOWN;
+    self->type = NODE_UNKNOWN;
 
-        /* We first try to match for trivial single-character cases. In the
-         * current situation, this covers everything except literals. */
-        switch ( *str ) {
+    /* We first try to match for trivial single-character cases. In the
+     * current situation, this covers everything except literals. */
+    switch ( *str ) {
 
-                /* Parentheses */
-                case '(':
-                case '[':
-                case '{':
-                        str += encode_prn ( self, NODE_LPAREN );
-                        break;
+        /* Parentheses */
+        case '(':
+        case '[':
+        case '{':
+            str += encode_prn ( self, NODE_LPAREN );
+            break;
 
-                case ')':
-                case ']':
-                case '}':
-                        str += encode_prn ( self, NODE_RPAREN );
-                        break;
+        case ')':
+        case ']':
+        case '}':
+            str += encode_prn ( self, NODE_RPAREN );
+            break;
 
-                /* Operators */
-                case '^': str += encode_opr ( self, NODE_OP_EXP      ); break;
-                case '/': str += encode_opr ( self, NODE_OP_DIVIDE   ); break;
-                case '*': str += encode_opr ( self, NODE_OP_MULTIPLY ); break;
-                case '+': str += encode_opr ( self, NODE_OP_ADD      ); break;
-                case '-': str += encode_opr ( self, NODE_OP_SUBTRACT ); break;
+        /* Operators */
+        case '^': str += encode_opr ( self, NODE_OP_EXP      ); break;
+        case '/': str += encode_opr ( self, NODE_OP_DIVIDE   ); break;
+        case '*': str += encode_opr ( self, NODE_OP_MULTIPLY ); break;
+        case '+': str += encode_opr ( self, NODE_OP_ADD      ); break;
+        case '-': str += encode_opr ( self, NODE_OP_SUBTRACT ); break;
 
-                /* Anything else, likely a literal */
-                default:  str += encode_lit ( self, str );
-        }
+        /* Anything else, likely a literal */
+        default:  str += encode_lit ( self, str );
+    }
 
-        return str;
+    return str;
 }
 
 struct node * pool_pull_node ( struct node_pool ** self,
-                unsigned int * pool_idx, unsigned int pool_count )
+        unsigned int * pool_idx, unsigned int pool_count )
 {
-        struct node * node = NULL;
+    struct node * node = NULL;
 
-        /* If we could not grab a node from the current pool, look to the next
-         * one, et cetera, until we've expended all available pools. If, at any
-         * point, we successfully grab a node, then we are done. */
-        while ( ! ( node = pool_new_node ( self [ *pool_idx ] ) ) &&
-                        *pool_idx++ < pool_count );
+    /* If we could not grab a node from the current pool, look to the next
+     * one, et cetera, until we've expended all available pools. If, at any
+     * point, we successfully grab a node, then we are done. */
+    while ( ! ( node = pool_new_node ( self [ *pool_idx ] ) ) &&
+            *pool_idx++ < pool_count );
 
-        return node;
+    return node;
 }
 
 enum node_type node_get_type ( struct node * self )
 {
-        return self->type;
+    return self->type;
 }
 
 enum node_operator node_op_get_type ( struct node * self )
 {
-        assert ( self->type == NODE_OPERATOR );
-        return self->op;
+    assert ( self->type == NODE_OPERATOR );
+    return self->op;
 }
 
 enum node_precedence node_test_prec ( struct node * o1, struct node * o2 )
 {
-        assert ( o1->type == NODE_OPERATOR && o2->type == NODE_OPERATOR );
-        enum node_operator op1 = o1->op, op2 = o2->op;
+    assert ( o1->type == NODE_OPERATOR && o2->type == NODE_OPERATOR );
+    enum node_operator op1 = o1->op, op2 = o2->op;
 
-        /* Rule #1: Exponentiation has the greatest precedence and is
-         * right-associative. */
-        if ( op1 == NODE_OP_EXP )
-                if ( op2 == NODE_OP_EXP )
-                        return NODE_PREC_SAME;
-                else
-                        return NODE_PREC_GREATER;
+    /* Rule #1: Exponentiation has the greatest precedence and is
+     * right-associative. */
+    if ( op1 == NODE_OP_EXP )
+        if ( op2 == NODE_OP_EXP )
+            return NODE_PREC_SAME;
+        else
+            return NODE_PREC_GREATER;
 
-        /* Rule #2: Addition has the same precedence as subtraction, and
-         * division has the same precedence as division. Note that, as according
-         * to the enumerable definition, the operators' integer values are
-         * listed in reverse-precedence order. */
-        if ( op1 > op2 ) {
-                if ( ( op1 == NODE_OP_ADD && op2 == NODE_OP_SUBTRACT ) || (
-                                op1 == NODE_OP_MULTIPLY &&
-                                op2 == NODE_OP_DIVIDE ) )
-                        return NODE_PREC_LASSOC;
+    /* Rule #2: Addition has the same precedence as subtraction, and
+     * division has the same precedence as division. Note that, as according
+     * to the enumerable definition, the operators' integer values are
+     * listed in reverse-precedence order. */
+    if ( op1 > op2 ) {
+        if ( ( op1 == NODE_OP_ADD && op2 == NODE_OP_SUBTRACT ) || (
+                op1 == NODE_OP_MULTIPLY &&
+                op2 == NODE_OP_DIVIDE ) )
+            return NODE_PREC_LASSOC;
 
-                return NODE_PREC_LESSER;
-        }
+        return NODE_PREC_LESSER;
+    }
 
-        /* Rule #3: The converse case of Rule #2. */
-        if ( op1 < op2 ) {
-                if ( ( op2 == NODE_OP_ADD && op1 == NODE_OP_SUBTRACT ) || (
-                                op1 == NODE_OP_MULTIPLY &&
-                                op2 == NODE_OP_DIVIDE ) )
-                        return NODE_PREC_LASSOC;
+    /* Rule #3: The converse case of Rule #2. */
+    if ( op1 < op2 ) {
+        if ( ( op2 == NODE_OP_ADD && op1 == NODE_OP_SUBTRACT ) || (
+                op1 == NODE_OP_MULTIPLY &&
+                op2 == NODE_OP_DIVIDE ) )
+            return NODE_PREC_LASSOC;
 
-                return NODE_PREC_GREATER;
-        }
+        return NODE_PREC_GREATER;
+    }
 
-        /* Note: As it stands, all implemented operators except exponentiation
-         * are left-associative. Rules are based on the C standards for the
-         * associativity of arithmetic operators. */
-        return NODE_PREC_LASSOC;
+    /* Note: As it stands, all implemented operators except exponentiation
+     * are left-associative. Rules are based on the C standards for the
+     * associativity of arithmetic operators. */
+    return NODE_PREC_LASSOC;
 }
 

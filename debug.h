@@ -16,29 +16,29 @@
 #define DEBUG_H
 
 #if defined DEBUG_VERBOSE
-#  define DEBUG_XSTR_(x) #x
-#  define DEBUG_XSTR(x) DEBUG_XSTR_ ( x )
-#  define DEBUG_PREFIX "[DEBUG @ " __FILE__ ":" DEBUG_XSTR ( __LINE__ ) "] "
+#    define DEBUG_XSTR_(x) #x
+#    define DEBUG_XSTR(x) DEBUG_XSTR_ ( x )
+#    define DEBUG_PREFIX "[DEBUG @ " __FILE__ ":" DEBUG_XSTR ( __LINE__ ) "] "
 #elif defined DEBUG_QUIET
-#  define DEBUG_PREFIX "[DEBUG] "
+#    define DEBUG_PREFIX "[DEBUG] "
 #endif
 
 #ifdef DEBUG_PREFIX
-#  include <stdio.h>
-#  define debug_printf(fmt, ...) \
+#    include <stdio.h>
+#    define debug_printf(fmt, ...) \
         fprintf ( stderr, DEBUG_PREFIX fmt, __VA_ARGS__ )
-#  define debug_puts(str)                       \
-        do {                                    \
-                fputs ( DEBUG_PREFIX, stderr ); \
-                fputs ( str, stderr );          \
-                fputc ( '\n', stderr );         \
+#    define debug_puts(str)                 \
+        do {                                \
+            fputs ( DEBUG_PREFIX, stderr ); \
+            fputs ( str, stderr );          \
+            fputc ( '\n', stderr );         \
         } while ( 0 )
-#  define debug_perror(str) \
+#    define debug_perror(str) \
         perror ( DEBUG_PREFIX str )
 #else
-#  define debug_printf(fmt, ...)
-#  define debug_puts(str)
-#  define debug_perror(str)
+#    define debug_printf(fmt, ...)
+#    define debug_puts(str)
+#    define debug_perror(str)
 #endif
 
 #endif /* DEBUG_H */

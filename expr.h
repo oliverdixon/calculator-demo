@@ -29,11 +29,11 @@ struct expression;
  * handling of an arithmetic expression
  */
 enum expr_status {
-        EXPR_OK,
-        EXPR_NONODE,
-        EXPR_BADSYMBOL,
-        EXPR_NOEXPR,
-        EXPR_INTERR,
+    EXPR_OK,
+    EXPR_NONODE,
+    EXPR_BADSYMBOL,
+    EXPR_NOEXPR,
+    EXPR_INTERR,
 };
 
 /**
@@ -45,7 +45,7 @@ enum expr_status {
  * @return the created expression, or NULL on failure
  */
 struct expression * expression_initialise ( const char * expr,
-        unsigned int capacity );
+    unsigned int capacity );
 
 /**
  * Shallow-destruct an entire expression type: constituent nodes are not freed.
@@ -65,7 +65,7 @@ void expression_destruct ( struct expression * self );
  * @return a status code according to the standard expression error schema
  */
 enum expr_status expression_tokenise ( struct expression * self,
-        struct node_pool ** pools, unsigned int pool_count );
+    struct node_pool ** pools, unsigned int pool_count );
 
 /**
  * Format and print a human-readable report of the status of the given
@@ -76,7 +76,7 @@ enum expr_status expression_tokenise ( struct expression * self,
  * @param status the status to interpret
  */
 void expression_perror ( struct expression * self, const char * msg,
-        enum expr_status status );
+    enum expr_status status );
 
 /**
  * Convert the tokenised expression into an equivalent postfix (a.k.a.

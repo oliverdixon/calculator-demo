@@ -4,8 +4,9 @@ CC := clang
 
 CFLAGS := -Weverything -Wno-dangling-else -Wno-vla  \
           -Wno-declaration-after-statement -MMD -MP \
-          -Wno-padded -Wno-covered-switch-default \
-          -Wno-unsafe-buffer-usage
+          -Wno-padded -Wno-covered-switch-default   \
+          -Wno-unsafe-buffer-usage                  \
+          -Wno-unknown-warning-option # Backward compatibility for clang
 
 SOURCES := $(wildcard *.c)
 
