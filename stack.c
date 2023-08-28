@@ -78,7 +78,7 @@ struct stack * stack_initialise ( unsigned int capacity )
                 if ( ! ( self->data = malloc ( sizeof ( void * ) *
                                 capacity ) ) ) {
                         free ( self );
-			self = NULL;
+                        self = NULL;
                 } else {
                         self->capacity = capacity;
                         self->size = 0;
@@ -92,9 +92,9 @@ void stack_destruct ( struct stack * self )
 {
         if ( self ) {
                 free ( self->data );
-		free ( self );
-		debug_puts ( "Stack destructed" );
-	}
+                free ( self );
+                debug_puts ( "Stack destructed" );
+        }
 }
 
 void * stack_pop ( struct stack * self )

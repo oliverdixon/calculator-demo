@@ -244,9 +244,9 @@ void pool_destruct ( struct node_pool * self )
 {
         if ( self ) {
                 free ( self->data );
-		free ( self );
-		debug_puts ( "Node pool destructed" );
-	}
+                free ( self );
+                debug_puts ( "Node pool destructed" );
+        }
 }
 
 struct node * pool_new_node ( struct node_pool * self )

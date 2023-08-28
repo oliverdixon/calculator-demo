@@ -280,8 +280,8 @@ void expression_destruct ( struct expression * self )
         if ( self ) {
                 free ( self->data );
                 stack_destruct ( self->postfix );
-		free ( self );
-		debug_puts ( "Expression destructed" );
+                free ( self );
+                debug_puts ( "Expression destructed" );
         }
 }
 
