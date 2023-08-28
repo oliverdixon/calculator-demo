@@ -1,12 +1,8 @@
 # Binaries
 *.sh
-c/debug
-c/release
+debug
+release
 
 # Vim swap files
 .*.sw*
-
-# Java binaries and temp files
-java/*.class
-java/javac.*.args
 
